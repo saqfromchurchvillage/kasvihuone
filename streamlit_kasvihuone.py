@@ -2,8 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import datetime as dt
-from pytz import timezone
-import pytz
 import urllib.error
 import urllib.request
 from io import StringIO
@@ -12,21 +10,20 @@ from io import StringIO
 GITHUB_REPO = 'saqfromchurchvillage/kasvihuone'
 CSV_URL = 'https://raw.githubusercontent.com/saqfromchurchvillage/kasvihuone/main/data/sensor_data.csv'
 
-# Oletetaan, että Streamlit-serveri käyttää UTC-aikaa
-SERVER_TZ = timezone('UTC')
-LOCAL_TZ = timezone('Europe/Helsinki')  # Korvaa 'Europe/Helsinki' oikealla aikavyöhykkeelläsi
 
 # Lataa CSV-tiedosto DataFrameksi
-@st.cache(ttl=600)  # Välimuistita tiedot 10 minuutiksi
+@st.cache_data(ttl=600)  # Välimuistita tiedot 10 minuutiksi
 def load_data(url):
     try:
         response = urllib.request.urlopen(url)
         data = response.read().decode('utf-8')
-        df = pd.read_csv(StringIO(data))
-        st.write("CSV-tiedoston sarakkeet:", df.columns.tolist())  # Debug-tulostus sarakkeista
+        df = pd.read_csv(StringIO(data))  # Käytetään oikeaa StringIO
+        if 'timestamp' not in df.columns:
+            st.error("CSV-tiedostossa ei ole 'timestamp'-saraketta.")
+            st.stop()
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         df = df.set_index('timestamp')
-        df.index = df.index.tz_localize(SERVER_TZ).tz_convert(LOCAL_TZ)
+        #df.index = df.index.tz_localize(SERVER_TZ).tz_convert(LOCAL_TZ)
         return df
     except urllib.error.HTTPError as e:
         st.error(f"HTTPError: {e.code} - {e.reason}")
@@ -41,7 +38,7 @@ def load_data(url):
 data = load_data(CSV_URL)
 
 # Suodata viimeiset 12 tuntia
-now = dt.datetime.now(LOCAL_TZ)
+now = dt.datetime.now()
 twelve_hours_ago = now - dt.timedelta(hours=12)
 data_last_12_hours = data[data.index >= twelve_hours_ago]
 
@@ -61,3 +58,4 @@ if not data_last_12_hours.empty:
 else:
     st.write("Ei tarpeeksi dataa viimeisiltä 12 tunnilta.")
     st.write(data)
+
