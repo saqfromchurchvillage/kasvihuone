@@ -66,7 +66,7 @@ if not data_last_12_hours.empty:
     st.write(f"Data viimeiseltä 12 tunnilta päivitettynä: {now.strftime('%Y-%m-%d %H:%M:%S %Z')}")
 
     # Show line chart
-    st.line_chart(data_last_12_hours[['lampotila', 'ilmankosteus']])
+    st.line_chart(data_last_12_hours[['temperature', 'humidity']])
 
     # Show DataFrame with most recent data first
     st.write(data_last_12_hours.sort_index(ascending=False))
