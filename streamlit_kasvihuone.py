@@ -63,7 +63,7 @@ if not data_last_12_hours.empty:
 
     # Create line chart
     st.title('Kasvihuoneen lämpötila ja ilmankosteus')
-    st.write(f"Data viimeiseltä 12 tunnilta päivitettynä: {now.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+    st.write(f"Data viimeiseltä 12 tunnilta päivitettynä: {now.strftime('%Y-%m-%d %H+3:%M:%S %Z')}")
 
     # Show line chart
     st.line_chart(data_last_12_hours[['lämpötila', 'ilmankosteus']])
