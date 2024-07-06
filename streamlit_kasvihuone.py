@@ -7,19 +7,20 @@ import urllib.request
 from io import StringIO
 from dateutil import parser
 
-# GitHub-repositorio ja tiedoston polku
+# GitHub repository and file path
 GITHUB_REPO = 'saqfromchurchvillage/kasvihuone'
 CSV_URL = 'https://raw.githubusercontent.com/saqfromchurchvillage/kasvihuone/main/data/sensor_data.csv'
+CSV_PATH = 'data/sensor_data.csv'
 
-# Lataa CSV-tiedosto DataFrameksi
-@st.cache_data(ttl=600)  # Välimuistita tiedot 10 minuutiksi
+# Load CSV file into DataFrame
+@st.cache_data(ttl=600)  # Cache data for 10 minutes
 def load_data(url):
     try:
         response = urllib.request.urlopen(url)
         data = response.read().decode('utf-8')
-        df = pd.read_csv(StringIO(data))  # Käytetään oikeaa StringIO
+        df = pd.read_csv(StringIO(data))  # Using correct StringIO
         if 'timestamp' not in df.columns:
-            st.error("CSV-tiedostossa ei ole 'timestamp'-saraketta.")
+            st.error("CSV file does not contain 'timestamp' column.")
             st.stop()
         
         # Flexible date parsing
@@ -36,26 +37,46 @@ def load_data(url):
         st.error(f"Error: {e}")
         st.stop()
 
+# Cleanup old data
+def cleanup_old_data(df, hours=24):
+    now = dt.datetime.now()
+    cutoff_time = now - dt.timedelta(hours=hours)
+    df = df[df.index >= cutoff_time]
+    return df
+
 data = load_data(CSV_URL)
 
-# Suodata viimeiset 12 tuntia
+# Cleanup old data (older than 24 hours)
+data = cleanup_old_data(data)
+
+# Filter the last 12 hours of data
 now = dt.datetime.now()
 twelve_hours_ago = now - dt.timedelta(hours=12)
 data_last_12_hours = data[data.index >= twelve_hours_ago]
 
-# Aseta aikaleima x-akselille
+# Sort data to show the most recent entries first
+data_last_12_hours = data_last_12_hours.sort_index(ascending=False)
+
+# Plot data if available
 if not data_last_12_hours.empty:
     data_last_12_hours = data_last_12_hours.resample('5T').mean()  # Resample 5 minutes average
 
-    # Luodaan viivadiagrammi
-    st.title('Reaaliaikainen Lämpötila- ja Ilmankosteusdata')
-    st.write(f"Viimeisten 12 tunnin data päivitettynä: {now.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+    # Create line chart
+    st.title('Real-time Temperature and Humidity Data')
+    st.write(f"Data from the last 12 hours updated at: {now.strftime('%Y-%m-%d %H:%M:%S %Z')}")
 
-    # Näytä viivadiagrammi
+    # Show line chart
     st.line_chart(data_last_12_hours[['temperature', 'humidity']])
 
-    # Näytä DataFrame
-    st.write(data_last_12_hours)
+    # Show DataFrame with most recent data first
+    st.write(data_last_12_hours.sort_index(ascending=False))
 else:
-    st.write("Ei tarpeeksi dataa viimeisiltä 12 tunnilta.")
+    st.write("Not enough data for the last 12 hours.")
     st.write(data)
+
+# Save cleaned data back to CSV (optional, requires authentication to push to GitHub)
+def save_cleaned_data(df, path):
+    df.to_csv(path)
+
+# Uncomment below line to save cleaned data locally (for testing purposes)
+# save_cleaned_data(data, CSV_PATH)
