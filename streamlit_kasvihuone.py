@@ -62,11 +62,11 @@ if not data_last_12_hours.empty:
     data_last_12_hours = data_last_12_hours.resample('5T').mean()  # Resample 5 minutes average
 
     # Create line chart
-    st.title('Real-time Temperature and Humidity Data')
-    st.write(f"Data from the last 12 hours updated at: {now.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+    st.title('Kasvihuoneen lämpötila ja ilmankosteus')
+    st.write(f"Data viimeiseltä 12 tunnilta päivitettynä: {now.strftime('%Y-%m-%d %H:%M:%S %Z')}")
 
     # Show line chart
-    st.line_chart(data_last_12_hours[['temperature', 'humidity']])
+    st.line_chart(data_last_12_hours[['lämpötila', 'ilmankosteus']])
 
     # Show DataFrame with most recent data first
     st.write(data_last_12_hours.sort_index(ascending=False))
