@@ -5,11 +5,11 @@ import datetime as dt
 import urllib.error
 import urllib.request
 from io import StringIO
+from dateutil import parser
 
 # GitHub-repositorio ja tiedoston polku
 GITHUB_REPO = 'saqfromchurchvillage/kasvihuone'
 CSV_URL = 'https://raw.githubusercontent.com/saqfromchurchvillage/kasvihuone/main/data/sensor_data.csv'
-
 
 # Lataa CSV-tiedosto DataFrameksi
 @st.cache_data(ttl=600)  # Välimuistita tiedot 10 minuutiksi
@@ -21,9 +21,10 @@ def load_data(url):
         if 'timestamp' not in df.columns:
             st.error("CSV-tiedostossa ei ole 'timestamp'-saraketta.")
             st.stop()
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        
+        # Flexible date parsing
+        df['timestamp'] = df['timestamp'].apply(parser.parse)
         df = df.set_index('timestamp')
-        #df.index = df.index.tz_localize(SERVER_TZ).tz_convert(LOCAL_TZ)
         return df
     except urllib.error.HTTPError as e:
         st.error(f"HTTPError: {e.code} - {e.reason}")
@@ -58,4 +59,3 @@ if not data_last_12_hours.empty:
 else:
     st.write("Ei tarpeeksi dataa viimeisiltä 12 tunnilta.")
     st.write(data)
-
