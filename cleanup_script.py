@@ -23,7 +23,7 @@ def main():
         return
 
     # Parse and set timestamp index
-    df['timestamp'] = df['timestamp'].apply(parser.parse)
+    df['timestamp'] = df['timestamp'].apply(lambda x: parser.parse(str(x)))
     df = df.set_index('timestamp')
 
     # Cleanup old data
