@@ -24,7 +24,7 @@ def load_data(url):
             st.stop()
         
         # Flexible date parsing
-        df['timestamp'] = df['timestamp'].apply(parser.parse)
+        df['timestamp'] = df['timestamp'].apply(lambda x: parser.parse(str(x)))
         df = df.set_index('timestamp')
         return df
     except urllib.error.HTTPError as e:
